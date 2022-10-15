@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-dpl
+  namespace: default
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      securityContext:
+        runAsUser: 2000
+        runAsGroup: 3000
+        fsGroup: 2000
+      containers:
+        - name: backend-container
+          image: {container_name}
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1.1Gi
+            requests:
+              cpu: 700m
+              memory: 750Mi
+          env:
+            - name: MYSQL_CONNECTION_STRING
+              value: "jdbc://abc:3306"
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /management/health
+              port: 8080
+            initialDelaySeconds: 150
+            periodSeconds: 20
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /management/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 1
+            successThreshold: 2
